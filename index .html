@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claim Your Reward</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: relative;
+    }
+
+    canvas#fireworksCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .container {
+        background: rgba(0, 0, 0, 0.65);
+        padding: 25px 15px;
+        border-radius: 15px;
+        max-width: 380px;
+        width: 90%;
+        box-sizing: border-box;
+        z-index: 1;
+        position: relative;
+        animation: pulseGlow 2s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+        0% {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2);
+        }
+        50% {
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.5), 0 0 80px rgba(255, 255, 255, 0.4);
+        }
+        100% {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 40px rgba(255, 255, 255, 0.2);
+        }
+    }
+
+    h1 { font-size: 1.5rem; margin-bottom: 18px; }
+
+    button, a.subscribe-link { cursor: pointer; transition: transform 0.2s ease; }
+
+    @keyframes bounce {
+        0%,20%,50%,80%,100% { transform: translateY(0);}
+        40% { transform: translateY(-6px);}
+        60% { transform: translateY(-3px);}
+    }
+
+    button#claimButton {
+        background-color: #ffcc00;
+        border: none;
+        padding: 12px 25px;
+        font-size: 1rem;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 220px;
+        margin-top: 12px;
+        animation: bounce 2s infinite;
+    }
+
+    button#claimButton:hover { background-color: #ffdd33; }
+
+    #rewardForm { display: none; margin-top: 18px; }
+
+    input {
+        display: block;
+        margin: 8px auto;
+        padding: 10px;
+        width: 90%;
+        border-radius: 8px;
+        border: none;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+    a.subscribe-link {
+        display: block;
+        margin: 12px auto;
+        padding: 10px 0;
+        background: #28a745;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        width: 90%;
+        animation: bounce 2s infinite;
+    }
+
+    a.subscribe-link:hover { background-color: #45c16e; }
+
+    #timerContainer {
+        margin: 12px auto;
+        width: 90%;
+        height: 16px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    #timerBar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #ffd700, #ff8c00);
+        border-radius: 10px 0 0 10px;
+        transition: width 0.1s linear;
+    }
+
+    #timerText {
+        margin-top: 6px;
+        font-weight: bold;
+        color: #ffd700;
+        font-size: 0.95rem;
+    }
+
+    #skipFireworks, #soundToggle {
+        display: none;
+        margin-top: 8px;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    #skipFireworks { background: #ff4444; color: white; }
+    #soundToggle { background: #007bff; color: white; }
+
+    @media (max-width: 400px) {
+        h1 { font-size: 1.3rem; }
+        button, input, a.subscribe-link { font-size: 0.9rem; }
+        #timerText { font-size: 0.85rem; }
+        #skipFireworks, #soundToggle { font-size: 0.85rem; }
+    }
+</style>
+</head>
+<body>
+<canvas id="fireworksCanvas"></canvas>
+
+<div class="container">
+    <h1>🎁 Claim Your Reward!</h1>
+    <button id="claimButton">Claim My Reward</button>
+
+    <form id="rewardForm">
+        <input type="email" placeholder="Enter your email" required>
+        <input type="tel" placeholder="Enter your phone number" required>
+
+        <a href="https://mljxqvr.bid/cl/f7a1a02b23639889"target="_blank" class="subscribe-link" id="subscribeLink">
+            Subscribe to Offer First
+        </a>
+
+        <div id="timerContainer">
+            <div id="timerBar"></div>
+        </div>
+        <div id="timerText"></div>
+
+        <button type="submit" id="submitBtn" disabled>Submit</button>
+        <button type="button" id="skipFireworks">Skip Fireworks</button>
+        <button type="button" id="soundToggle">🔊 Sound On</button>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+const claimButton = document.getElementById('claimButton');
+const form = document.getElementById('rewardForm');
+const subscribeLink = document.getElementById('subscribeLink');
+const submitBtn = document.getElementById('submitBtn');
+const timerBar = document.getElementById('timerBar');
+const timerText = document.getElementById('timerText');
+const skipBtn = document.getElementById('skipFireworks');
+const soundToggle = document.getElementById('soundToggle');
+
+let subscribed = false;
+const MIN_WAIT = 10000;
+let countdownInterval;
+let fireworksAnimation;
+
+let soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+soundToggle.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+
+soundToggle.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    localStorage.setItem('soundEnabled', soundEnabled);
+    soundToggle.textContent = soundEnabled ? '🔊 Sound On' : '🔇 Sound Off';
+});
+
+claimButton.addEventListener('click', () => {
+    form.style.display = 'block';
+    claimButton.style.display = 'none';
+});
+
+function startCountdown(remainingTime) {
+    const total = remainingTime;
+    timerBar.style.width = '0%';
+    countdownInterval = setInterval(() => {
+        remainingTime -= 100;
+        if (remainingTime > 0) {
+            const percent = ((total - remainingTime) / total) * 100;
+            timerBar.style.width = percent + '%';
+            timerText.textContent = `Wait ${Math.ceil(remainingTime/1000)}s to enable Submit`;
+            localStorage.setItem('subscribeTime', Date.now() - (MIN_WAIT - remainingTime));
+        } else {
+            timerBar.style.width = '100%';
+            timerText.textContent = '✅ You can now submit the form!';
+            submitBtn.disabled = false;
+            clearInterval(countdownInterval);
+            localStorage.removeItem('subscribeTime');
+            celebrate(); // automatically celebrate for returning users
+        }
+    }, 100);
+}
+
+subscribeLink.addEventListener('click', () => {
+    subscribed = true;
+    const now = Date.now();
+    localStorage.setItem('subscribeTime', now);
+    alert('✅ Complete the subscription in the new tab, then return after a few seconds.');
+    startCountdown(MIN_WAIT);
+});
+
+window.addEventListener('load', () => {
+    const savedTime = parseInt(localStorage.getItem('subscribeTime'),10);
+    if (!isNaN(savedTime)) {
+        const elapsed = Date.now() - savedTime;
+        if (elapsed < MIN_WAIT) {
+            subscribed = true;
+            startCountdown(MIN_WAIT - elapsed);
+        } else {
+            subscribed = true;
+            submitBtn.disabled = false;
+            timerBar.style.width = '100%';
+            timerText.textContent = '✅ You can now submit the form!';
+            celebrate(); // automatically celebrate for returning users
+        }
+    }
+});
+
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && subscribed) {
+        const savedTime = parseInt(localStorage.getItem('subscribeTime'),10) || 0;
+        const elapsed = Date.now() - savedTime;
+        if (elapsed >= MIN_WAIT) {
+            submitBtn.disabled = false;
+            timerBar.style.width = '100%';
+            timerText.textContent = '✅ You can now submit the form!';
+            clearInterval(countdownInterval);
+            localStorage.removeItem('subscribeTime');
+            celebrate(); // celebrate automatically
+        }
+    }
+});
+
+function celebrate() {
+    skipBtn.style.display = 'inline-block';
+    soundToggle.style.display = 'inline-block';
+    const duration = 6000;
+    const end = Date.now() + duration;
+
+    if(soundEnabled){
+        const audio = new Audio('https://www.myinstants.com/media/sounds/party-horn.mp3');
+        audio.play();
+    }
+
+    const canvas = document.getElementById('fireworksCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particles = [];
+
+    function createFirework() {
+        const x = Math.random()*canvas.width;
+        const y = Math.random()*canvas.height/2;
+        for(let i=0;i<25;i++){
+            const angle = Math.random()*Math.PI*2;
+            const speed = Math.random()*4+1.5;
+            particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle)*speed,
+                vy: Math.sin(angle)*speed,
+                alpha: 1,
+                color: `hsl(${Math.random()*360},100%,50%)`,
+                trail: []
+            });
+        }
+    }
+
+    function updateFireworks() {
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        particles.forEach((p,i)=>{
+            p.trail.push({x:p.x, y:p.y});
+            if(p.trail.length>4) p.trail.shift();
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.04;
+            p.alpha -= 0.02;
+
+            ctx.beginPath();
+            for(let j=0;j<p.trail.length;j++){
+                const point = p.trail[j];
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha*(j/p.trail.length);
+                ctx.fillRect(point.x, point.y, 3,3);
+            }
+
+            if(p.alpha<=0) particles.splice(i,1);
+        });
+        ctx.globalAlpha=1;
+
+        if(Date.now()<end || particles.length>0){
+            if(Math.random()<0.08) createFirework();
+            fireworksAnimation = requestAnimationFrame(updateFireworks);
+        }
+    }
+
+    updateFireworks();
+
+    (function confettiFrame(){
+        confetti({
+            particleCount: Math.floor(Math.random()*3)+2,
+            angle: 60,
+            spread: Math.random()*40+40,
+            origin: { x: 0 },
+            colors: ['#ff0','#f00','#0f0','#00f','#ff0ff'],
+            gravity: Math.random()*0.5+0.5,
+            scalar: Math.random()*0.6+0.3
+        });
+        confetti({
+            particleCount: Math.floor(Math.random()*3)+2,
+            angle: 120,
+            spread: Math.random()*40+40,
+            origin: { x: 1 },
+            colors: ['#ff0','#f00','#0f0','#00f','#ff0ff'],
+            gravity: Math.random()*0.5+0.5,
+            scalar: Math.random()*0.6+0.3
+        });
+        if(Date.now()<end) requestAnimationFrame(confettiFrame);
+    })();
+}
+
+form.addEventListener('submit', e => {
+    e.preventDefault();
+    const savedTime = parseInt(localStorage.getItem('subscribeTime'),10) || 0;
+    if(!subscribed || Date.now()-savedTime<MIN_WAIT){
+        alert('⚠️ You must properly subscribe before submitting!');
+        return;
+    }
+    const email = form.querySelector('input[type="email"]').value;
+    const phone = form.querySelector('input[type="tel"]').value;
+    console.log('Subscribed:', email, phone);
+
+    celebrate();
+
+    alert('🎉 Thank you! Your reward details have been submitted.');
+
+    form.reset();
+    form.style.display = 'none';
+    claimButton.style.display = 'block';
+    submitBtn.disabled = true;
+    skipBtn.style.display = 'none';
+    soundToggle.style.display = 'none';
+    subscribed = false;
+    timerText.textContent = '';
+    timerBar.style.width = '0%';
+    clearInterval(countdownInterval);
+    localStorage.removeItem('subscribeTime');
+});
+
+// Skip fireworks button
+skipBtn.addEventListener('click', () => {
+    cancelAnimationFrame(fireworksAnimation);
+    const canvas = document.getElementById('fireworksCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    skipBtn.style.display = 'none';
+});
+</script>
+</body>
+</html>
